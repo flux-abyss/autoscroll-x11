@@ -1,6 +1,4 @@
-git remote -vgit remote -v# autoscroll-x11
-
-Low-latency, motion-activated autoscroll for X11.
+## Low-latency, motion-activated autoscroll for X11.
 
 Hold the middle mouse button and move the pointer to scroll. Moving above the
 click point scrolls up; below scrolls down, with speed proportional to distance.
