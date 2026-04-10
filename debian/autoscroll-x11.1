@@ -1,0 +1,47 @@
+.TH AUTOSCROLL\-X11 1 "April 2026" "0.1.0" "User Commands"
+.SH NAME
+autoscroll\-x11 \- Windows\-like middle\-click autoscroll for X11
+.SH SYNOPSIS
+.B autoscroll\-x11
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+.B autoscroll\-x11
+monitors the middle mouse button and activates smooth autoscroll when the
+button is held beyond a configurable threshold.  Releasing the button
+immediately cancels scrolling so that normal middle\-click behaviour is
+preserved for short presses.
+.PP
+An anchor overlay is displayed at the pointer position when autoscroll
+becomes active.  Moving the pointer away from the anchor in any direction
+scrolls in that direction at a speed proportional to the distance.
+.SH OPTIONS
+.TP
+.B \-\-tray
+Start with only a system\-tray icon; do not open the main window.
+.TP
+.B \-\-debug
+Enable verbose debug logging to standard error.
+.TP
+.B \-\-version
+Print the version string and exit.
+.SH ENVIRONMENT
+.TP
+.B DISPLAY
+X11 display to connect to (required).
+.TP
+.B AUTOSCROLL_DEBUG
+Set to any non\-empty value to enable debug logging.
+.SH FILES
+.TP
+.I /etc/xdg/autostart/autoscroll\-x11.desktop
+XDG autostart entry.
+.TP
+.I /usr/lib/autoscroll\-x11/autoscroll_x11/
+Python package installed by the Debian package.
+.SH SEE ALSO
+.BR xdotool (1),
+.BR xinput (1)
+.SH AUTHOR
+Joseph Wiley <joe@example.com>
+.SH LICENSE
+GPL\-3.0\-or\-later

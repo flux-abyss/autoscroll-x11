@@ -1,0 +1,2 @@
+# debian/autoscroll-x11.install is intentionally empty.
+# All install steps are handled explicitly in debian/rules.

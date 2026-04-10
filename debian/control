@@ -1,0 +1,32 @@
+Source: autoscroll-x11
+Section: x11
+Priority: optional
+Maintainer: Joseph Wiley <joe@example.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-python,
+ python3-all
+Standards-Version: 4.7.0
+Homepage: https://github.com/jwiley/autoscroll-x11
+Vcs-Git: https://github.com/jwiley/autoscroll-x11.git
+Vcs-Browser: https://github.com/jwiley/autoscroll-x11
+Rules-Requires-Root: no
+
+Package: autoscroll-x11
+Architecture: all
+Depends:
+ ${misc:Depends},
+ python3,
+ python3-gi,
+ python3-xlib,
+ gir1.2-gtk-3.0,
+ gir1.2-ayatanaappindicator3-0.1 | gir1.2-appindicator3-0.1
+Recommends:
+ xdotool
+Description: Windows-like middle-click autoscroll for X11
+ Activates smooth autoscroll when the middle mouse button is held.
+ Releasing the button immediately cancels scrolling so that normal
+ middle-click behaviour is preserved for short presses.
+ .
+ An anchor overlay and directional indicator are displayed while
+ autoscroll is active.

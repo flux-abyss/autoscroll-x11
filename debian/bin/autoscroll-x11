@@ -1,0 +1,13 @@
+#!/usr/bin/python3
+"""autoscroll-x11 launcher installed to /usr/bin."""
+
+import sys
+import os
+
+# App code lives alongside this launcher under /usr/lib/autoscroll-x11/.
+sys.path.insert(0, "/usr/lib/autoscroll-x11")
+
+from autoscroll_x11.app import main  # noqa: E402
+
+if __name__ == "__main__":
+    main()
