@@ -1,11 +1,15 @@
-# autoscroll-x11
+git remote -vgit remote -v# autoscroll-x11
 
-Middle-click autoscroll for X11.
+Low-latency, motion-activated autoscroll for X11.
 
 Hold the middle mouse button and move the pointer to scroll. Moving above the
-click point scrolls up; below scrolls down. Speed is proportional to distance
-from the click point. Releasing the button stops scrolling. A quick press and
-release without movement is forwarded as a normal middle click.
+click point scrolls up; below scrolls down, with speed proportional to distance.
+Horizontal and diagonal scrolling are supported. Releasing the button stops
+scrolling.
+
+Normal middle-click behavior is fully preserved. A quick press and release is
+forwarded as a standard middle click, including Primary Selection paste (middle-click
+paste from the X11 primary buffer).
 
 A tray icon provides an enabled/disabled toggle and quit action.
 
@@ -51,4 +55,9 @@ Run linter:
 
 ```sh
 bash scripts/lint.sh
+```
+## License
+
+GPL-3.0-or-later
+
 ```
