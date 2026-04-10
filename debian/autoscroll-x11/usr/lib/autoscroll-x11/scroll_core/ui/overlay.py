@@ -14,6 +14,8 @@ _SIZE = 24
 _GLYPH_NEUTRAL = "+"
 _GLYPH_UP = "↑"
 _GLYPH_DOWN = "↓"
+_GLYPH_LEFT = "←"
+_GLYPH_RIGHT = "→"
 
 
 class AnchorOverlay:
@@ -38,19 +40,22 @@ class AnchorOverlay:
         self._window.show_all()
         log.debug("AnchorOverlay shown at (%d, %d)", x, y)
 
-    def update_direction(self, dy: int) -> None:
-        """Update the displayed glyph based on vertical displacement *dy*.
+    def update_direction(self, dx: int, dy: int) -> None:
+        """Update the displayed glyph based on displacement (dx, dy).
 
-        dy > ACTIVATION_RADIUS_PX  → show down arrow
-        dy < -ACTIVATION_RADIUS_PX → show up arrow
-        otherwise                  → show neutral cross
+        Within ACTIVATION_RADIUS_PX on both axes → neutral cross.
+        When |dx| > |dy| and outside radius → left or right arrow.
+        Otherwise → up or down arrow.
         """
-        if dy > ACTIVATION_RADIUS_PX:
-            self._set_glyph(_GLYPH_DOWN)
-        elif dy < -ACTIVATION_RADIUS_PX:
-            self._set_glyph(_GLYPH_UP)
-        else:
+        abs_dx = abs(dx)
+        abs_dy = abs(dy)
+        outside = abs_dx > ACTIVATION_RADIUS_PX or abs_dy > ACTIVATION_RADIUS_PX
+        if not outside:
             self._set_glyph(_GLYPH_NEUTRAL)
+        elif abs_dx > abs_dy:
+            self._set_glyph(_GLYPH_RIGHT if dx > 0 else _GLYPH_LEFT)
+        else:
+            self._set_glyph(_GLYPH_DOWN if dy > 0 else _GLYPH_UP)
 
     def hide(self) -> None:
         """Hide the overlay."""

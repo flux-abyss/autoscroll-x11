@@ -157,9 +157,9 @@ class InputMonitor:
 
             dx = x - self._state.anchor_x
             dy = y - self._state.anchor_y
-            _vx, vy = self._motion.compute_velocity(dx, dy)
-            self._engine.tick(0.0, vy)
-            self._overlay.update_direction(dy)
+            vx, vy = self._motion.compute_velocity(dx, dy)
+            self._engine.tick(vx, vy)
+            self._overlay.update_direction(dx, dy)
 
         return True
 

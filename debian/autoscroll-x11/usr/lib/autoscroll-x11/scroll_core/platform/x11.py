@@ -9,6 +9,8 @@ log = logging.getLogger(__name__)
 # X button numbers for scroll directions.
 BUTTON_SCROLL_UP = 4
 BUTTON_SCROLL_DOWN = 5
+BUTTON_SCROLL_LEFT = 6
+BUTTON_SCROLL_RIGHT = 7
 
 # Button mask for middle button (button 2).
 _BUTTON2_MASK = 512  # Xlib.X.Button2Mask
@@ -81,7 +83,7 @@ class X11Display:
     def send_scroll_event(self, button: int) -> None:
         """Inject a synthetic XTest scroll button press+release.
 
-        button 4 = scroll up, button 5 = scroll down.
+        button 4 = up, 5 = down, 6 = left, 7 = right.
         """
         if self._display is None:
             return

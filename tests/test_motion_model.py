@@ -83,3 +83,28 @@ def test_diagonal_velocity_less_than_vertical_at_same_distance() -> None:
     _vx, vy_pure = model.compute_velocity(0, dy_pure)
     _vx, vy_diag = model.compute_velocity(dx_diag, dy_diag)
     assert vy_pure > vy_diag > 0.0
+
+
+def test_right_of_center_scrolls_right() -> None:
+    model = MotionModel()
+    vx, _vy = model.compute_velocity(ACTIVATION_RADIUS_PX + 1, 0)
+    assert vx > 0.0
+
+
+def test_left_of_center_scrolls_left() -> None:
+    model = MotionModel()
+    vx, _vy = model.compute_velocity(-(ACTIVATION_RADIUS_PX + 1), 0)
+    assert vx < 0.0
+
+
+def test_horizontal_only_displacement_returns_zero_vy_and_nonzero_vx() -> None:
+    model = MotionModel()
+    vx, vy = model.compute_velocity(ACTIVATION_RADIUS_PX + 50, 0)
+    assert vy == 0.0
+    assert vx > 0.0
+
+
+def test_horizontal_velocity_capped_at_max() -> None:
+    model = MotionModel()
+    vx, _vy = model.compute_velocity(10_000, 0)
+    assert vx <= _MAX_LINES_PER_TICK
