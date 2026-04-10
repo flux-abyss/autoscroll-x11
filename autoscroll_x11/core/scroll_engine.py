@@ -1,10 +1,10 @@
-"""Scroll engine: accumulates velocity and fires XTest scroll events."""
+"""Scroll engine: accumulates lines-per-tick and fires XTest scroll events."""
 
 from __future__ import annotations
 
 import logging
+import math
 
-from autoscroll_x11.config import POLL_INTERVAL_MS
 from autoscroll_x11.platform.x11 import (
     BUTTON_SCROLL_DOWN,
     BUTTON_SCROLL_UP,
@@ -13,15 +13,16 @@ from autoscroll_x11.platform.x11 import (
 
 log = logging.getLogger(__name__)
 
-# Seconds per poll tick.
-_TICK_S = POLL_INTERVAL_MS / 1000.0
-
 
 class ScrollEngine:
-    """Converts velocity (lines/sec) into XTest button events each tick.
+    """Converts lines-per-tick velocity into XTest button events.
 
-    Sub-pixel remainders are accumulated so slow speeds still produce
-    smooth scrolling over multiple ticks.
+    MotionModel returns velocity already scaled to lines-per-tick so no
+    time conversion is needed here.  Sub-whole-line remainders are
+    accumulated across ticks for smooth low-speed scrolling.
+
+    Positive vy = scroll down (button 5).
+    Negative vy = scroll up (button 4).
     """
 
     def __init__(self, display: X11Display) -> None:
@@ -29,24 +30,36 @@ class ScrollEngine:
         self._remainder: float = 0.0
 
     def tick(self, vx: float, vy: float) -> None:
-        """Fire scroll events for one poll interval.
+        """Accumulate *vy* and emit scroll button events for whole steps.
 
-        vx is ignored (horizontal not implemented yet).
-        Positive vy = scroll down; negative vy = scroll up.
+        Guarantees at least one event per tick when vy is nonzero,
+        so that light but intentional motion always produces visible scroll.
+        vx is accepted for forward-compatibility but ignored.
         """
-        lines = vy * _TICK_S + self._remainder
-        whole = int(lines)
-        self._remainder = lines - whole
-
-        if whole == 0:
+        if vy == 0.0:
             return
 
-        button = BUTTON_SCROLL_DOWN if whole > 0 else BUTTON_SCROLL_UP
-        count = abs(whole)
+        accumulated = vy + self._remainder
+        steps = int(accumulated)
+
+        # Guarantee at least one step per tick when vy is nonzero.
+        if steps == 0:
+            steps = math.copysign(1, vy)
+            steps = int(steps)
+
+        self._remainder = accumulated - steps
+
+        log.debug(
+            "ScrollEngine: vy=%.3f accumulated=%.3f steps=%d rem=%.3f",
+            vy, accumulated, steps, self._remainder,
+        )
+
+        button = BUTTON_SCROLL_DOWN if steps > 0 else BUTTON_SCROLL_UP
+        count = abs(steps)
         for _ in range(count):
             self._display.send_scroll_event(button)
-        log.debug("ScrollEngine: sent %d x button%d", count, button)
 
     def flush(self) -> None:
         """Discard accumulated remainder."""
         self._remainder = 0.0
+        log.debug("ScrollEngine: flushed")

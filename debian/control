@@ -21,11 +21,10 @@ Depends:
  python3-gi,
  python3-xlib,
  gir1.2-gtk-3.0
-Recommends:
- xdotool
 Description: Windows-like middle-click autoscroll for X11
  Activates smooth autoscroll when the middle mouse button is held.
- Releasing the button cancels scrolling for short presses so that normal
- middle-click behaviour is preserved.
+ Moving away from the click position scrolls the active window in that
+ direction. Releasing the button stops scrolling; a quick press and
+ release is forwarded as a normal middle click.
  .
  A tray icon provides an enabled/disabled toggle and quit action.

@@ -23,6 +23,11 @@ class InputMonitor:
 
     Uses GLib.io_add_watch on the X connection file descriptor so the event
     loop integrates cleanly with Gtk.main().
+
+    On activation the active pointer grab is released so that XTest scroll
+    events (buttons 4/5) reach the target window rather than being redirected
+    back to this client.  While ACTIVE, pointer position and button state are
+    polled via query_pointer() each tick.
     """
 
     def __init__(
@@ -129,7 +134,7 @@ class InputMonitor:
             if event.type == Xlib.X.ButtonPress and event.detail == 2:
                 self._handle_press(event.root_x, event.root_y)
             elif event.type == Xlib.X.ButtonRelease and event.detail == 2:
-                self._handle_release()
+                self._handle_release(armed_release=True)
             elif event.type == Xlib.X.MotionNotify:
                 self._handle_motion(event.root_x, event.root_y)
         return True
@@ -141,8 +146,18 @@ class InputMonitor:
             return False
 
         if self._state.mode == ScrollMode.ACTIVE:
-            dx = self._state.pointer_x - self._state.anchor_x
-            dy = self._state.pointer_y - self._state.anchor_y
+            x, y, b2_held = self._display.query_pointer()
+            self._state.pointer_x = x
+            self._state.pointer_y = y
+
+            if not b2_held:
+                # Button released while we weren't watching X events.
+                log.debug("Button2 released (detected by poll)")
+                self._handle_release(armed_release=False)
+                return True
+
+            dx = x - self._state.anchor_x
+            dy = y - self._state.anchor_y
             _vx, vy = self._motion.compute_velocity(dx, dy)
             self._engine.tick(0.0, vy)
             self._overlay.update_direction(dy)
@@ -163,18 +178,20 @@ class InputMonitor:
         self._state.pointer_y = y
         log.debug("ARMED at (%d, %d)", x, y)
 
-    def _handle_release(self) -> None:
+    def _handle_release(self, *, armed_release: bool) -> None:
         mode = self._state.mode
         was_quick = mode == ScrollMode.ARMED
 
         if mode == ScrollMode.ACTIVE:
             self._engine.flush()
             self._overlay.hide()
+            # Passive grab was removed on activation; reinstall it.
+            self._grab_button()
 
         self._state.reset()
         log.debug("IDLE (was %s)", mode)
 
-        if was_quick:
+        if was_quick and armed_release:
             self._replay_middle_click()
 
     def _handle_motion(self, x: int, y: int) -> None:
@@ -194,6 +211,9 @@ class InputMonitor:
         self._state.anchor_x = self._state.press_x
         self._state.anchor_y = self._state.press_y
         self._overlay.show_at(self._state.anchor_x, self._state.anchor_y)
+        # Release the active pointer grab so XTest scroll events (buttons 4/5)
+        # reach the target window instead of being redirected to this client.
+        self._display.ungrab_pointer()
         log.debug(
             "ACTIVE anchor (%d, %d)",
             self._state.anchor_x,

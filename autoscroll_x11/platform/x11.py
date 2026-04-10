@@ -10,6 +10,9 @@ log = logging.getLogger(__name__)
 BUTTON_SCROLL_UP = 4
 BUTTON_SCROLL_DOWN = 5
 
+# Button mask for middle button (button 2).
+_BUTTON2_MASK = 512  # Xlib.X.Button2Mask
+
 
 class X11Display:
     """Wraps python3-xlib for pointer queries and XTest scroll injection."""
@@ -54,19 +57,40 @@ class X11Display:
         p = self._root.query_pointer()
         return (p.root_x, p.root_y)
 
+    def query_pointer(self) -> tuple[int, int, bool]:
+        """Return (x, y, button2_held) from a live pointer query."""
+        if self._root is None:
+            return (0, 0, False)
+        p = self._root.query_pointer()
+        return (p.root_x, p.root_y, bool(p.mask & _BUTTON2_MASK))
+
+    def ungrab_pointer(self) -> None:
+        """Release the active pointer grab.
+
+        Called on autoscroll activation so that XTest scroll events
+        are delivered to the target window rather than redirected back
+        to this client by the active Button2 grab.
+        """
+        if self._display is None:
+            return
+        import Xlib.X
+        self._display.ungrab_pointer(Xlib.X.CurrentTime)
+        self._display.flush()
+        log.debug("X11Display: pointer ungrabbed")
+
     def send_scroll_event(self, button: int) -> None:
         """Inject a synthetic XTest scroll button press+release.
 
-        Args:
-            button: X button number (4=up, 5=down).
+        button 4 = scroll up, button 5 = scroll down.
         """
         if self._display is None:
             return
         import Xlib.X
         import Xlib.ext.xtest as xtest
+        log.debug("X11Display: send_scroll_event button=%d", button)
         xtest.fake_input(self._display, Xlib.X.ButtonPress, button)
         xtest.fake_input(self._display, Xlib.X.ButtonRelease, button)
-        self._display.sync()
+        self._display.flush()
 
     def fileno(self) -> int:
         """Return the X connection file descriptor.
