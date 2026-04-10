@@ -1,0 +1,7 @@
+# Development tools for use in a local venv.
+# These are not runtime dependencies; runtime deps are Debian system packages.
+# Install with: pip install -r requirements.txt
+
+flake8
+pylint
+pytest

@@ -14,15 +14,15 @@ AUTOSTART_DIR="$HOME/.config/autostart"
 install -d "$INSTALL_LIB" "$INSTALL_BIN" "$AUTOSTART_DIR"
 
 # Copy the Python package.
-rm -rf "$INSTALL_LIB/autoscroll_x11"
-cp -r "$REPO_ROOT/autoscroll_x11" "$INSTALL_LIB/"
+rm -rf "$INSTALL_LIB/scroll_core"
+cp -r "$REPO_ROOT/scroll_core" "$INSTALL_LIB/"
 
 # Write the launcher.
 cat > "$INSTALL_BIN/autoscroll-x11" << LAUNCHER
 #!/usr/bin/python3
 import sys
 sys.path.insert(0, "$INSTALL_LIB")
-from autoscroll_x11.app import main
+from scroll_core.app import main
 main()
 LAUNCHER
 chmod 0755 "$INSTALL_BIN/autoscroll-x11"

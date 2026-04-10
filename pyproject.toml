@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "autoscroll-x11"
+version = "0.1.0"
+description = "Windows-like middle-click autoscroll for X11"
+readme = "README.md"
+license = { spdx = "GPL-3.0-or-later" }
+authors = [{ name = "Joseph Wiley" }]
+requires-python = ">=3.10"
+
+# Runtime dependencies are system packages delivered via Debian.
+# python3-gi, python3-xlib, and gir1.2-gtk-3.0 are not available on PyPI.
+# Do not list them here; see debian/control for the authoritative dep list.
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scroll_core*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

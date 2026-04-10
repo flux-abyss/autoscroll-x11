@@ -1,7 +1,7 @@
 Source: autoscroll-x11
 Section: x11
 Priority: optional
-Maintainer: Joseph Wiley <joe@example.com>
+Maintainer: Joseph Wiley <flux.abyss@proton.me>
 Build-Depends:
  debhelper-compat (= 13),
  dh-python,

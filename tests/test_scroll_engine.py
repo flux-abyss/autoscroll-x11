@@ -2,8 +2,8 @@
 
 from unittest.mock import MagicMock
 
-from autoscroll_x11.core.scroll_engine import ScrollEngine
-from autoscroll_x11.platform.x11 import BUTTON_SCROLL_DOWN, BUTTON_SCROLL_UP
+from scroll_core.engine.scroll_engine import ScrollEngine
+from scroll_core.platform.x11 import BUTTON_SCROLL_DOWN, BUTTON_SCROLL_UP
 
 
 def _engine() -> tuple[ScrollEngine, MagicMock]:
@@ -61,7 +61,6 @@ def test_multiple_events_per_tick() -> None:
 
 
 def test_flush_resets_remainder() -> None:
-    # After flush, a tick with large vy should fire normally.
     engine, display = _engine()
     engine.tick(0.0, 2.5)
     engine.flush()

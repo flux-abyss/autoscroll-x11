@@ -1,0 +1,97 @@
+"""Application entry point."""
+
+import argparse
+import sys
+
+from scroll_core import __version__
+from scroll_core.logging_setup import setup_logging
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="autoscroll-x11",
+        description="Windows-like middle-click autoscroll for X11.",
+    )
+    p.add_argument(
+        "--version",
+        action="version",
+        version=f"autoscroll-x11 {__version__}",
+    )
+    p.add_argument(
+        "--tray",
+        action="store_true",
+        help="Run as tray-only application.",
+    )
+    p.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging.",
+    )
+    return p
+
+
+def main() -> None:
+    args = _build_parser().parse_args()
+    setup_logging(debug=args.debug)
+
+    if args.tray:
+        _run_tray()
+    else:
+        print(
+            "autoscroll-x11: normal mode is not implemented yet.\n"
+            "Run with --tray to start the tray application.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+def _run_tray() -> None:
+    try:
+        import gi
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk
+    except (ImportError, ValueError) as exc:
+        print(
+            f"autoscroll-x11: GTK not available: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    from scroll_core.input.input_monitor import InputMonitor
+    from scroll_core.engine.motion_model import MotionModel
+    from scroll_core.engine.scroll_engine import ScrollEngine
+    from scroll_core.input.state import ScrollState
+    from scroll_core.platform.x11 import X11Display
+    from scroll_core.ui.overlay import AnchorOverlay
+    from scroll_core.ui.tray import TrayIcon
+
+    display = X11Display()
+    try:
+        display.open()
+    except RuntimeError as exc:
+        print(f"autoscroll-x11: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    state = ScrollState()
+    motion = MotionModel()
+    engine = ScrollEngine(display)
+    overlay = AnchorOverlay()
+    monitor = InputMonitor(state, display, motion, engine, overlay)
+
+    def on_enable_change(enabled: bool) -> None:
+        if enabled:
+            monitor.start()
+        else:
+            monitor.stop()
+
+    tray = TrayIcon()
+    tray.on_enable_change = on_enable_change
+    tray.show()
+
+    monitor.start()
+
+    try:
+        Gtk.main()
+    finally:
+        monitor.stop()
+        display.close()

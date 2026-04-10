@@ -1,14 +1,14 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: autoscroll-x11
-Upstream-Contact: Joseph Wiley <joe@example.com>
+Upstream-Contact: Joseph Wiley <flux.abyss@proton.me>
 Source: https://github.com/jwiley/autoscroll-x11
 
 Files: *
-Copyright: 2026 Joseph Wiley <joe@example.com>
+Copyright: 2026 Joseph Wiley <flux.abyss@proton.me>
 License: GPL-3.0-or-later
 
 Files: debian/*
-Copyright: 2026 Joseph Wiley <joe@example.com>
+Copyright: 2026 Joseph Wiley <flux.abyss@proton.me>
 License: GPL-3.0-or-later
 
 License: GPL-3.0-or-later

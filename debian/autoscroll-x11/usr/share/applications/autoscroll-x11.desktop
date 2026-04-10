@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Autoscroll X11
+Comment=Windows-like middle-click autoscroll for X11
+Exec=autoscroll-x11 --tray
+Icon=autoscroll-x11
+Categories=Utility;Accessibility;
+Keywords=scroll;mouse;autoscroll;x11;
+StartupNotify=false
+NoDisplay=false

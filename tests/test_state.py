@@ -1,6 +1,6 @@
 """Tests for ScrollState and ScrollMode."""
 
-from autoscroll_x11.core.state import ScrollMode, ScrollState
+from scroll_core.input.state import ScrollMode, ScrollState
 
 
 def test_import() -> None:

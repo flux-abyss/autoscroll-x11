@@ -1,7 +1,7 @@
 """Tests for MotionModel."""
 
-from autoscroll_x11.config import DEAD_ZONE_PX
-from autoscroll_x11.core.motion_model import (
+from scroll_core.config import DEAD_ZONE_PX
+from scroll_core.engine.motion_model import (
     MotionModel,
     _FULL_SCALE_PX,
     _MAX_LINES_PER_TICK,

@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checking
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Build and distribution
+build/
+dist/
+
+# Debian build artifacts
+*.deb
+*.buildinfo
+*.changes
+*.tar.gz
+*.tar.xz
+*.diff.gz
+*.dsc
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
