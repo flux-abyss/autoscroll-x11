@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import math
 
 from scroll_core.platform.x11 import (
     BUTTON_SCROLL_DOWN,
@@ -17,9 +16,8 @@ log = logging.getLogger(__name__)
 class ScrollEngine:
     """Converts lines-per-tick velocity into XTest button events.
 
-    MotionModel returns velocity already scaled to lines-per-tick so no
-    time conversion is needed here.  Sub-whole-line remainders are
-    accumulated across ticks for smooth low-speed scrolling.
+    Sub-whole-line remainders accumulate across ticks for smooth
+    low-speed scrolling.
 
     Positive vy = scroll down (button 5).
     Negative vy = scroll up (button 4).
@@ -32,8 +30,6 @@ class ScrollEngine:
     def tick(self, vx: float, vy: float) -> None:
         """Accumulate *vy* and emit scroll button events for whole steps.
 
-        Guarantees at least one event per tick when vy is nonzero,
-        so that light but intentional motion always produces visible scroll.
         vx is accepted for forward-compatibility but ignored.
         """
         if vy == 0.0:
@@ -41,12 +37,6 @@ class ScrollEngine:
 
         accumulated = vy + self._remainder
         steps = int(accumulated)
-
-        # Guarantee at least one step per tick when vy is nonzero.
-        if steps == 0:
-            steps = math.copysign(1, vy)
-            steps = int(steps)
-
         self._remainder = accumulated - steps
 
         log.debug(
@@ -54,9 +44,11 @@ class ScrollEngine:
             vy, accumulated, steps, self._remainder,
         )
 
+        if steps == 0:
+            return
+
         button = BUTTON_SCROLL_DOWN if steps > 0 else BUTTON_SCROLL_UP
-        count = abs(steps)
-        for _ in range(count):
+        for _ in range(abs(steps)):
             self._display.send_scroll_event(button)
 
     def flush(self) -> None:

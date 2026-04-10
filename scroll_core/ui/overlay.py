@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from scroll_core.config import DEAD_ZONE_PX
+from scroll_core.config import ACTIVATION_RADIUS_PX
 
 log = logging.getLogger(__name__)
 
@@ -41,13 +41,13 @@ class AnchorOverlay:
     def update_direction(self, dy: int) -> None:
         """Update the displayed glyph based on vertical displacement *dy*.
 
-        dy > DEAD_ZONE_PX  → show down arrow
-        dy < -DEAD_ZONE_PX → show up arrow
-        otherwise          → show neutral cross
+        dy > ACTIVATION_RADIUS_PX  → show down arrow
+        dy < -ACTIVATION_RADIUS_PX → show up arrow
+        otherwise                  → show neutral cross
         """
-        if dy > DEAD_ZONE_PX:
+        if dy > ACTIVATION_RADIUS_PX:
             self._set_glyph(_GLYPH_DOWN)
-        elif dy < -DEAD_ZONE_PX:
+        elif dy < -ACTIVATION_RADIUS_PX:
             self._set_glyph(_GLYPH_UP)
         else:
             self._set_glyph(_GLYPH_NEUTRAL)
