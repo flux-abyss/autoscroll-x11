@@ -78,7 +78,14 @@ def _run_tray() -> None:
     overlay = AnchorOverlay()
     monitor = InputMonitor(state, display, motion, engine, overlay)
 
+    def on_enable_change(enabled: bool) -> None:
+        if enabled:
+            monitor.start()
+        else:
+            monitor.stop()
+
     tray = TrayIcon()
+    tray.on_enable_change = on_enable_change
     tray.show()
 
     monitor.start()

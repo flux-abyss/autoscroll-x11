@@ -1,4 +1,4 @@
-"""Smoke tests for ScrollState and ScrollMode."""
+"""Tests for ScrollState and ScrollMode."""
 
 from autoscroll_x11.core.state import ScrollMode, ScrollState
 
@@ -16,10 +16,14 @@ def test_default_state_is_idle() -> None:
 def test_reset_returns_to_idle() -> None:
     state = ScrollState()
     state.mode = ScrollMode.ACTIVE
+    state.press_x = 100
+    state.press_y = 200
     state.anchor_x = 400
     state.anchor_y = 300
     state.reset()
     assert state.mode == ScrollMode.IDLE
+    assert state.press_x == 0
+    assert state.press_y == 0
     assert state.anchor_x == 0
     assert state.anchor_y == 0
 

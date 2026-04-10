@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Callable
 
 log = logging.getLogger(__name__)
 
@@ -11,12 +12,16 @@ class TrayIcon:
     """System-tray icon backed by Gtk.StatusIcon.
 
     Right-click shows the context menu.
-    Left-click (activate signal) also shows the menu safely.
+    Left-click also shows the menu safely.
+
+    The caller may set on_enable_change to be notified when the
+    Enabled toggle fires.  The callback receives a single bool.
     """
 
     def __init__(self) -> None:
         self._enabled: bool = True
         self._icon: object | None = None
+        self.on_enable_change: Callable[[bool], None] | None = None
 
     def show(self) -> None:
         """Create and display the tray icon."""
@@ -45,13 +50,11 @@ class TrayIcon:
         log.debug("TrayIcon destroyed")
 
     def _on_activate(self, _icon: object) -> None:
-        # Left-click: open menu at pointer position.
         self._popup_at_pointer()
 
     def _on_popup_menu(
         self, _icon: object, button: int, time: int
     ) -> None:
-        # Right-click: open menu with button/time from the event.
         self._popup_with(button=button, time=time)
 
     def _popup_at_pointer(self) -> None:
@@ -98,6 +101,8 @@ class TrayIcon:
         if isinstance(item, Gtk.CheckMenuItem):
             self._enabled = item.get_active()
         log.debug("autoscroll enabled: %s", self._enabled)
+        if self.on_enable_change is not None:
+            self.on_enable_change(self._enabled)
 
     def _on_preferences(self, _item: object) -> None:
         log.debug("Preferences: not yet implemented")

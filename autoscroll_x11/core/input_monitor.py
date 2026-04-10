@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
-import time
+import math
 
 import Xlib.X
 import Xlib.ext.xtest as xtest
 
-from autoscroll_x11.config import HOLD_THRESHOLD_MS, POLL_INTERVAL_MS
+from autoscroll_x11.config import ACTIVATION_RADIUS_PX, POLL_INTERVAL_MS
 from autoscroll_x11.core.motion_model import MotionModel
 from autoscroll_x11.core.scroll_engine import ScrollEngine
 from autoscroll_x11.core.state import ScrollMode, ScrollState
@@ -140,18 +140,12 @@ class InputMonitor:
             self._timer_id = None
             return False
 
-        if self._state.mode == ScrollMode.ARMED:
-            elapsed = (
-                int(time.monotonic() * 1000) - self._state.press_time_ms
-            )
-            if elapsed >= HOLD_THRESHOLD_MS:
-                self._activate()
-
         if self._state.mode == ScrollMode.ACTIVE:
             dx = self._state.pointer_x - self._state.anchor_x
             dy = self._state.pointer_y - self._state.anchor_y
             _vx, vy = self._motion.compute_velocity(dx, dy)
             self._engine.tick(0.0, vy)
+            self._overlay.update_direction(dy)
 
         return True
 
@@ -163,9 +157,10 @@ class InputMonitor:
         if self._state.mode != ScrollMode.IDLE:
             return
         self._state.mode = ScrollMode.ARMED
+        self._state.press_x = x
+        self._state.press_y = y
         self._state.pointer_x = x
         self._state.pointer_y = y
-        self._state.press_time_ms = int(time.monotonic() * 1000)
         log.debug("ARMED at (%d, %d)", x, y)
 
     def _handle_release(self) -> None:
@@ -189,16 +184,15 @@ class InputMonitor:
         self._state.pointer_y = y
 
         if self._state.mode == ScrollMode.ARMED:
-            elapsed = (
-                int(time.monotonic() * 1000) - self._state.press_time_ms
-            )
-            if elapsed >= HOLD_THRESHOLD_MS:
+            dx = x - self._state.press_x
+            dy = y - self._state.press_y
+            if math.hypot(dx, dy) >= ACTIVATION_RADIUS_PX:
                 self._activate()
 
     def _activate(self) -> None:
         self._state.mode = ScrollMode.ACTIVE
-        self._state.anchor_x = self._state.pointer_x
-        self._state.anchor_y = self._state.pointer_y
+        self._state.anchor_x = self._state.press_x
+        self._state.anchor_y = self._state.press_y
         self._overlay.show_at(self._state.anchor_x, self._state.anchor_y)
         log.debug(
             "ACTIVE anchor (%d, %d)",
