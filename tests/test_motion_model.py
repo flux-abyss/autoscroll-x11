@@ -108,3 +108,22 @@ def test_horizontal_velocity_capped_at_max() -> None:
     model = MotionModel()
     vx, _vy = model.compute_velocity(10_000, 0)
     assert vx <= _MAX_LINES_PER_TICK
+
+
+def test_diagonal_produces_nonzero_vx_and_vy() -> None:
+    # A 45-degree displacement well outside the activation radius should
+    # yield nonzero velocity on both axes simultaneously.
+    offset = ACTIVATION_RADIUS_PX + 40
+    model = MotionModel()
+    vx, vy = model.compute_velocity(offset, offset)
+    assert vx > 0.0
+    assert vy > 0.0
+
+
+def test_diagonal_axes_symmetric() -> None:
+    # Equal dx and dy should produce equal magnitude velocities on both axes.
+    offset = ACTIVATION_RADIUS_PX + 60
+    model = MotionModel()
+    vx, vy = model.compute_velocity(offset, offset)
+    assert abs(vx - vy) < 1e-9
+

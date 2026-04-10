@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import logging
 
-from scroll_core.config import ACTIVATION_RADIUS_PX
+from scroll_core.config import (
+    ACTIVATION_RADIUS_PX,
+    DIAGONAL_RATIO_MAX,
+    DIAGONAL_RATIO_MIN,
+)
 
 log = logging.getLogger(__name__)
 
@@ -16,6 +20,10 @@ _GLYPH_UP = "↑"
 _GLYPH_DOWN = "↓"
 _GLYPH_LEFT = "←"
 _GLYPH_RIGHT = "→"
+_GLYPH_UP_LEFT = "↖"
+_GLYPH_UP_RIGHT = "↗"
+_GLYPH_DOWN_RIGHT = "↘"
+_GLYPH_DOWN_LEFT = "↙"
 
 
 class AnchorOverlay:
@@ -43,16 +51,34 @@ class AnchorOverlay:
     def update_direction(self, dx: int, dy: int) -> None:
         """Update the displayed glyph based on displacement (dx, dy).
 
-        Within ACTIVATION_RADIUS_PX on both axes → neutral cross.
-        When |dx| > |dy| and outside radius → left or right arrow.
-        Otherwise → up or down arrow.
+        Near center (within ACTIVATION_RADIUS_PX on both axes): +
+        Both axes outside radius and ratio in diagonal band: ↖ ↗ ↘ ↙
+        Otherwise dominant axis: ← → ↑ ↓
         """
         abs_dx = abs(dx)
         abs_dy = abs(dy)
-        outside = abs_dx > ACTIVATION_RADIUS_PX or abs_dy > ACTIVATION_RADIUS_PX
-        if not outside:
+        x_outside = abs_dx > ACTIVATION_RADIUS_PX
+        y_outside = abs_dy > ACTIVATION_RADIUS_PX
+
+        if not x_outside and not y_outside:
             self._set_glyph(_GLYPH_NEUTRAL)
-        elif abs_dx > abs_dy:
+            return
+
+        if x_outside and y_outside:
+            ratio = abs_dx / abs_dy
+            if DIAGONAL_RATIO_MIN <= ratio <= DIAGONAL_RATIO_MAX:
+                if dx < 0 and dy < 0:
+                    self._set_glyph(_GLYPH_UP_LEFT)
+                elif dx > 0 and dy < 0:
+                    self._set_glyph(_GLYPH_UP_RIGHT)
+                elif dx > 0 and dy > 0:
+                    self._set_glyph(_GLYPH_DOWN_RIGHT)
+                else:
+                    self._set_glyph(_GLYPH_DOWN_LEFT)
+                return
+
+        # Dominant-axis fallback.
+        if abs_dx >= abs_dy:
             self._set_glyph(_GLYPH_RIGHT if dx > 0 else _GLYPH_LEFT)
         else:
             self._set_glyph(_GLYPH_DOWN if dy > 0 else _GLYPH_UP)

@@ -4,10 +4,10 @@
 7779e9e77c49b188cf6861b4f2efb423  usr/lib/autoscroll-x11/scroll_core/__pycache__/__init__.cpython-313.pyc
 d4bded02a28ba27b870b1b570d52c857  usr/lib/autoscroll-x11/scroll_core/__pycache__/__main__.cpython-313.pyc
 dbf07102c4563a23dcd4bcda181128fd  usr/lib/autoscroll-x11/scroll_core/__pycache__/app.cpython-313.pyc
-2ee1f94a8251cff06f50c6465962c6c0  usr/lib/autoscroll-x11/scroll_core/__pycache__/config.cpython-313.pyc
+de9cf367a8a170873bd3cee0a9f6505f  usr/lib/autoscroll-x11/scroll_core/__pycache__/config.cpython-313.pyc
 574d4ecece5e5e2b08ea49c629ef7db3  usr/lib/autoscroll-x11/scroll_core/__pycache__/logging_setup.cpython-313.pyc
 1ed5ca7c814856ec9f734e905814825a  usr/lib/autoscroll-x11/scroll_core/app.py
-38a87998af2ef2ebe35a4c12e03bf3a7  usr/lib/autoscroll-x11/scroll_core/config.py
+3966e692f6880e375af9f7e9c25a3c18  usr/lib/autoscroll-x11/scroll_core/config.py
 d41d8cd98f00b204e9800998ecf8427e  usr/lib/autoscroll-x11/scroll_core/engine/__init__.py
 f781078b070d33dc0160889b860d78ed  usr/lib/autoscroll-x11/scroll_core/engine/__pycache__/__init__.cpython-313.pyc
 6ba9f1aabfe1f5cb6613ad770533e34a  usr/lib/autoscroll-x11/scroll_core/engine/__pycache__/motion_model.cpython-313.pyc
@@ -26,8 +26,10 @@ bf4dc6307ec4c40402359f0cbb515175  usr/lib/autoscroll-x11/scroll_core/platform/__
 790b76eb0fdfbd3433cea8f3d06bdaa0  usr/lib/autoscroll-x11/scroll_core/platform/wm.py
 5022e42835699b8ab0ad3291314c8b75  usr/lib/autoscroll-x11/scroll_core/platform/x11.py
 d41d8cd98f00b204e9800998ecf8427e  usr/lib/autoscroll-x11/scroll_core/ui/__init__.py
+d25f8644184d545bc6bd3fd7341bd6be  usr/lib/autoscroll-x11/scroll_core/ui/__pycache__/__init__.cpython-313.pyc
+c3e81b44959a2980406124d4de617022  usr/lib/autoscroll-x11/scroll_core/ui/__pycache__/overlay.cpython-313.pyc
 59b4f22dc2fb8dd6fc07fcb14d7488af  usr/lib/autoscroll-x11/scroll_core/ui/indicator.py
-db0c4400f371045b3ab68226f13d854f  usr/lib/autoscroll-x11/scroll_core/ui/overlay.py
+8bdd51d960780ca0456d51993ba35b43  usr/lib/autoscroll-x11/scroll_core/ui/overlay.py
 aca0b5b2637b100f5fa28630dd8a4d6a  usr/lib/autoscroll-x11/scroll_core/ui/tray.py
 949c43fa739d999e98effee9891d8b60  usr/share/applications/autoscroll-x11.desktop
 012828ce1dc1358a982a733cbf1b20f3  usr/share/doc/autoscroll-x11/README.md

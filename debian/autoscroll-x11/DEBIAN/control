@@ -2,7 +2,7 @@ Package: autoscroll-x11
 Version: 0.1.0-1
 Architecture: all
 Maintainer: Joseph Wiley <flux.abyss@proton.me>
-Installed-Size: 104
+Installed-Size: 112
 Depends: python3, python3-gi, python3-xlib, gir1.2-gtk-3.0
 Section: x11
 Priority: optional
