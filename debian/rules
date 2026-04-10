@@ -1,37 +1,30 @@
 #!/usr/bin/make -f
 
-# Explicit install; no pybuild layout magic.
-APPLIB    := debian/autoscroll-x11/usr/lib/autoscroll-x11
-APPBIN    := debian/autoscroll-x11/usr/bin
-APPDATA   := debian/autoscroll-x11/usr/share
-ETCXDG    := debian/autoscroll-x11/etc/xdg/autostart
+APPLIB  := debian/autoscroll-x11/usr/lib/autoscroll-x11
+APPBIN  := debian/autoscroll-x11/usr/bin
+APPDATA := debian/autoscroll-x11/usr/share
+ETCXDG  := debian/autoscroll-x11/etc/xdg/autostart
 
 %:
 	dh $@
 
 override_dh_auto_build:
-	# Nothing to compile.
 
 override_dh_auto_install:
-	# Python package
 	install -d $(APPLIB)
 	cp -r autoscroll_x11 $(APPLIB)/
 
-	# Launcher
 	install -d $(APPBIN)
 	install -m 0755 debian/bin/autoscroll-x11 $(APPBIN)/autoscroll-x11
 
-	# Desktop entry
 	install -d $(APPDATA)/applications
 	install -m 0644 data/applications/autoscroll-x11.desktop \
 		$(APPDATA)/applications/
 
-	# Autostart entry
 	install -d $(ETCXDG)
 	install -m 0644 data/autostart/autoscroll-x11.desktop \
 		$(ETCXDG)/
 
-	# Icons
 	install -d $(APPDATA)/icons/hicolor/scalable/apps
 	install -m 0644 data/icons/hicolor/scalable/apps/autoscroll-x11.svg \
 		$(APPDATA)/icons/hicolor/scalable/apps/
@@ -41,5 +34,4 @@ override_dh_auto_install:
 		$(APPDATA)/icons/hicolor/symbolic/apps/
 
 override_dh_auto_test:
-	# Run smoke tests if python3 is available.
-	python3 -m pytest tests/ -q --tb=short || true
+	python3 -m pytest tests/ -q --tb=short

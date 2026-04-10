@@ -1,35 +1,52 @@
-"""Scroll engine stub.
-
-Translates velocity vectors from ``MotionModel`` into X11 synthetic scroll
-events (XTest / XSendEvent) at a fixed polling rate.
-"""
+"""Scroll engine: accumulates velocity and fires XTest scroll events."""
 
 from __future__ import annotations
 
 import logging
 
 from autoscroll_x11.config import POLL_INTERVAL_MS
+from autoscroll_x11.platform.x11 import (
+    BUTTON_SCROLL_DOWN,
+    BUTTON_SCROLL_UP,
+    X11Display,
+)
 
 log = logging.getLogger(__name__)
 
+# Seconds per poll tick.
+_TICK_S = POLL_INTERVAL_MS / 1000.0
+
 
 class ScrollEngine:
-    """Fires synthetic scroll events at ``POLL_INTERVAL_MS`` intervals.
+    """Converts velocity (lines/sec) into XTest button events each tick.
 
-    This is a stub. XTest event injection is deferred to the next phase.
+    Sub-pixel remainders are accumulated so slow speeds still produce
+    smooth scrolling over multiple ticks.
     """
 
+    def __init__(self, display: X11Display) -> None:
+        self._display = display
+        self._remainder: float = 0.0
+
     def tick(self, vx: float, vy: float) -> None:
-        """Inject scroll events proportional to *vx* and *vy*.
+        """Fire scroll events for one poll interval.
 
-        Called once per ``POLL_INTERVAL_MS`` while autoscroll is active.
-
-        Args:
-            vx: Horizontal velocity (lines/second).
-            vy: Vertical velocity (lines/second).
+        vx is ignored (horizontal not implemented yet).
+        Positive vy = scroll down; negative vy = scroll up.
         """
-        log.debug("ScrollEngine.tick(vx=%.2f, vy=%.2f) — stub", vx, vy)
+        lines = vy * _TICK_S + self._remainder
+        whole = int(lines)
+        self._remainder = lines - whole
+
+        if whole == 0:
+            return
+
+        button = BUTTON_SCROLL_DOWN if whole > 0 else BUTTON_SCROLL_UP
+        count = abs(whole)
+        for _ in range(count):
+            self._display.send_scroll_event(button)
+        log.debug("ScrollEngine: sent %d x button%d", count, button)
 
     def flush(self) -> None:
-        """Discard any accumulated sub-pixel remainder and reset state."""
-        log.debug("ScrollEngine.flush() — stub")
+        """Discard accumulated remainder."""
+        self._remainder = 0.0

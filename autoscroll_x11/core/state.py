@@ -7,8 +7,8 @@ from enum import Enum, auto
 class ScrollMode(Enum):
     """Autoscroll FSM states."""
 
-    IDLE = auto()    # No middle-button activity.
-    ARMED = auto()   # Middle button pressed; within hold threshold.
+    IDLE = auto()  # No middle-button activity.
+    ARMED = auto()  # Middle button pressed; within hold threshold.
     ACTIVE = auto()  # Hold threshold exceeded; autoscroll running.
 
 

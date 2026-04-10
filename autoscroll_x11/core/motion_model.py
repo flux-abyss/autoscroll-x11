@@ -1,36 +1,39 @@
-"""Motion model stub.
-
-Converts a pointer offset from the anchor point into a (vx, vy) velocity
-vector, applying dead-zone clamping and a configurable acceleration curve.
-"""
+"""Motion model: pointer displacement to scroll velocity."""
 
 from __future__ import annotations
 
-import logging
+import math
 
 from autoscroll_x11.config import DEAD_ZONE_PX, MAX_SCROLL_VELOCITY
 
-log = logging.getLogger(__name__)
-
 
 class MotionModel:
-    """Maps pointer displacement to scroll velocity.
+    """Converts pointer displacement from the anchor into scroll velocity.
 
-    This is a stub. The acceleration curve is not yet implemented.
+    Only vertical velocity is produced in this pass. Horizontal is zero.
+
+    The curve is linear beyond the dead zone, capped at MAX_SCROLL_VELOCITY.
+    The scaling factor is chosen so that a moderate deflection (~100 px beyond
+    the dead zone) produces a comfortable mid-range speed.
     """
 
+    # Pixels of deflection beyond dead zone that map to MAX_SCROLL_VELOCITY.
+    _FULL_SCALE_PX: int = 200
+
     def compute_velocity(self, dx: int, dy: int) -> tuple[float, float]:
-        """Return (vx, vy) scroll velocity for the given pointer displacement.
+        """Return (vx, vy) scroll velocity for the given displacement.
 
-        Displacement within ``DEAD_ZONE_PX`` returns (0.0, 0.0).
-        Values are clamped to ±``MAX_SCROLL_VELOCITY``.
-
-        Args:
-            dx: Horizontal displacement from anchor (pixels).
-            dy: Vertical displacement from anchor (pixels).
+        dx and dy are the pointer's distance from the anchor in pixels.
+        Positive dy means the pointer is below the anchor (scroll down).
 
         Returns:
-            A (vx, vy) tuple in lines-per-second.
+            (vx, vy) in lines per second. vx is always 0.0 in this pass.
         """
-        log.debug("MotionModel.compute_velocity(%d, %d) — stub", dx, dy)
-        return (0.0, 0.0)
+        abs_dy = abs(dy)
+        if abs_dy <= DEAD_ZONE_PX:
+            return (0.0, 0.0)
+
+        deflection = abs_dy - DEAD_ZONE_PX
+        raw = (deflection / self._FULL_SCALE_PX) * MAX_SCROLL_VELOCITY
+        vy = math.copysign(min(raw, MAX_SCROLL_VELOCITY), dy)
+        return (0.0, vy)

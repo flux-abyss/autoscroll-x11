@@ -1,47 +1,228 @@
-"""Input monitor stub.
-
-Responsible for grabbing the middle mouse button via XInput2 and dispatching
-press/release/motion events to the rest of the pipeline.
-"""
+"""Input monitor: grabs middle-button events from X11 and drives the FSM."""
 
 from __future__ import annotations
 
 import logging
-from typing import Callable
+import time
+
+import Xlib.X
+import Xlib.ext.xtest as xtest
+
+from autoscroll_x11.config import HOLD_THRESHOLD_MS, POLL_INTERVAL_MS
+from autoscroll_x11.core.motion_model import MotionModel
+from autoscroll_x11.core.scroll_engine import ScrollEngine
+from autoscroll_x11.core.state import ScrollMode, ScrollState
+from autoscroll_x11.platform.x11 import X11Display
+from autoscroll_x11.ui.overlay import AnchorOverlay
 
 log = logging.getLogger(__name__)
 
 
 class InputMonitor:
-    """Grabs pointer events from X11 and forwards them to registered handlers.
+    """Grabs button-2 events from X11 and drives the autoscroll FSM.
 
-    This is a stub. Full XInput2 integration is deferred to the next phase.
+    Uses GLib.io_add_watch on the X connection file descriptor so the event
+    loop integrates cleanly with Gtk.main().
     """
 
-    def __init__(self) -> None:
-        self._on_press: Callable[[], None] | None = None
-        self._on_release: Callable[[], None] | None = None
-        self._on_motion: Callable[[int, int], None] | None = None
-
-    def set_handlers(
+    def __init__(
         self,
-        on_press: Callable[[], None],
-        on_release: Callable[[], None],
-        on_motion: Callable[[int, int], None],
+        state: ScrollState,
+        display: X11Display,
+        motion: MotionModel,
+        engine: ScrollEngine,
+        overlay: AnchorOverlay,
     ) -> None:
-        """Register event callbacks."""
-        self._on_press = on_press
-        self._on_release = on_release
-        self._on_motion = on_motion
+        self._state = state
+        self._display = display
+        self._motion = motion
+        self._engine = engine
+        self._overlay = overlay
+        self._watch_id: int | None = None
+        self._timer_id: int | None = None
+        self._running: bool = False
 
     def start(self) -> None:
-        """Begin listening for pointer events.
+        """Install GLib watches for X events and the poll timer."""
+        from gi.repository import GLib
 
-        Acquires an XInput2 passive grab on button 2 (middle) for all windows.
-        Raises ``RuntimeError`` if the X display cannot be opened.
-        """
-        log.debug("InputMonitor.start() — not yet implemented")
+        self._grab_button()
+
+        fd = self._display.fileno()
+        self._watch_id = GLib.io_add_watch(
+            fd,
+            GLib.IOCondition.IN,
+            self._on_x_event,
+        )
+        self._timer_id = GLib.timeout_add(
+            POLL_INTERVAL_MS,
+            self._on_poll_tick,
+        )
+        self._running = True
+        log.debug("InputMonitor started")
 
     def stop(self) -> None:
-        """Release the pointer grab and stop the event loop."""
-        log.debug("InputMonitor.stop() — not yet implemented")
+        """Remove GLib watches and release the button grab."""
+        self._running = False
+        from gi.repository import GLib
+
+        watch_id = self._watch_id
+        self._watch_id = None
+        if watch_id is not None:
+            GLib.source_remove(watch_id)
+
+        timer_id = self._timer_id
+        self._timer_id = None
+        if timer_id is not None:
+            GLib.source_remove(timer_id)
+
+        self._ungrab_button()
+        log.debug("InputMonitor stopped")
+
+    # ------------------------------------------------------------------
+    # Grab helpers
+    # ------------------------------------------------------------------
+
+    def _grab_button(self) -> None:
+        root = self._display._root
+        if root is None:
+            return
+        root.grab_button(
+            Xlib.X.Button2,
+            Xlib.X.AnyModifier,
+            True,
+            Xlib.X.ButtonPressMask
+            | Xlib.X.ButtonReleaseMask
+            | Xlib.X.PointerMotionMask,
+            Xlib.X.GrabModeAsync,
+            Xlib.X.GrabModeAsync,
+            Xlib.X.NONE,
+            Xlib.X.NONE,
+        )
+        self._display._display.flush()
+
+    def _ungrab_button(self) -> None:
+        root = self._display._root
+        if root is None:
+            return
+        try:
+            root.ungrab_button(Xlib.X.Button2, Xlib.X.AnyModifier)
+            self._display._display.flush()
+        except Exception:
+            pass
+
+    # ------------------------------------------------------------------
+    # GLib callbacks
+    # ------------------------------------------------------------------
+
+    def _on_x_event(self, fd: int, condition: object) -> bool:
+        """Called by GLib when X fd is readable.
+
+        Returns True to keep the watch active.
+        """
+        if not self._running:
+            self._watch_id = None
+            return False
+        display = self._display._display
+        while display.pending_events():
+            event = display.next_event()
+            if event.type == Xlib.X.ButtonPress and event.detail == 2:
+                self._handle_press(event.root_x, event.root_y)
+            elif event.type == Xlib.X.ButtonRelease and event.detail == 2:
+                self._handle_release()
+            elif event.type == Xlib.X.MotionNotify:
+                self._handle_motion(event.root_x, event.root_y)
+        return True
+
+    def _on_poll_tick(self) -> bool:
+        """Called by GLib every POLL_INTERVAL_MS. Returns True to repeat."""
+        if not self._running:
+            self._timer_id = None
+            return False
+
+        if self._state.mode == ScrollMode.ARMED:
+            elapsed = (
+                int(time.monotonic() * 1000) - self._state.press_time_ms
+            )
+            if elapsed >= HOLD_THRESHOLD_MS:
+                self._activate()
+
+        if self._state.mode == ScrollMode.ACTIVE:
+            dx = self._state.pointer_x - self._state.anchor_x
+            dy = self._state.pointer_y - self._state.anchor_y
+            _vx, vy = self._motion.compute_velocity(dx, dy)
+            self._engine.tick(0.0, vy)
+
+        return True
+
+    # ------------------------------------------------------------------
+    # FSM
+    # ------------------------------------------------------------------
+
+    def _handle_press(self, x: int, y: int) -> None:
+        if self._state.mode != ScrollMode.IDLE:
+            return
+        self._state.mode = ScrollMode.ARMED
+        self._state.pointer_x = x
+        self._state.pointer_y = y
+        self._state.press_time_ms = int(time.monotonic() * 1000)
+        log.debug("ARMED at (%d, %d)", x, y)
+
+    def _handle_release(self) -> None:
+        mode = self._state.mode
+        was_quick = mode == ScrollMode.ARMED
+
+        if mode == ScrollMode.ACTIVE:
+            self._engine.flush()
+            self._overlay.hide()
+
+        self._state.reset()
+        log.debug("IDLE (was %s)", mode)
+
+        if was_quick:
+            self._replay_middle_click()
+
+    def _handle_motion(self, x: int, y: int) -> None:
+        if self._state.mode == ScrollMode.IDLE:
+            return
+        self._state.pointer_x = x
+        self._state.pointer_y = y
+
+        if self._state.mode == ScrollMode.ARMED:
+            elapsed = (
+                int(time.monotonic() * 1000) - self._state.press_time_ms
+            )
+            if elapsed >= HOLD_THRESHOLD_MS:
+                self._activate()
+
+    def _activate(self) -> None:
+        self._state.mode = ScrollMode.ACTIVE
+        self._state.anchor_x = self._state.pointer_x
+        self._state.anchor_y = self._state.pointer_y
+        self._overlay.show_at(self._state.anchor_x, self._state.anchor_y)
+        log.debug(
+            "ACTIVE anchor (%d, %d)",
+            self._state.anchor_x,
+            self._state.anchor_y,
+        )
+
+    # ------------------------------------------------------------------
+    # Middle-click replay
+    # ------------------------------------------------------------------
+
+    def _replay_middle_click(self) -> None:
+        """Forward a synthetic button-2 click to the window under the pointer.
+
+        The passive grab on Button2 would re-intercept any XTest Button2 press
+        we inject while it is installed.  Remove it first, inject the click,
+        then reinstall it so subsequent presses are grabbed again.
+        """
+        self._ungrab_button()
+
+        d = self._display._display
+        xtest.fake_input(d, Xlib.X.ButtonPress, 2)
+        xtest.fake_input(d, Xlib.X.ButtonRelease, 2)
+        d.sync()
+
+        self._grab_button()
+        log.debug("Middle click replayed and grab reinstalled")
